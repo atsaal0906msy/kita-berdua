@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Love Story - Dynamic Couple Space</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rosepink: '#ff758c',
+                        softrose: '#ff7eb3',
+                        lavender: '#e0c3fc',
+                        blush: '#fff0f5',
+                        glass: 'rgba(255, 255, 255, 0.45)',
+                        glassDark: 'rgba(255, 255, 255, 0.25)'
+                    },
+                    fontFamily: {
+                        cursive: ['"Dancing Script"', 'cursive'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 18s ease infinite;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(255, 105, 180, 0.2);
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* Floating Hearts Canvas */
+        #heartCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff758c;
+            border-radius: 10px;
+        }
+
+        /* Glowing Effects */
+        .glow-heart {
+            filter: drop-shadow(0 0 10px rgba(255, 117, 140, 0.8));
+        }
+
+        .memory-card {
+            perspective: 1000px;
+        }
+        .memory-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .memory-card.flipped .memory-card-inner {
+            transform: rotateY(180deg);
+        }
+        .memory-card-front, .memory-card-back {
+            backface-visibility: hidden;
+        }
+        .memory-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Audio Visualizer Waves */
+        .bar {
+            width: 4px;
+            background: linear-gradient(to top, #ff758c, #ff7eb3);
+            border-radius: 3px;
+            animation: bounce 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes bounce {
+            0% { height: 6px; }
+            100% { height: 28px; }
+        }
+        .bar:nth-child(1) { animation-delay: 0.1s; }
+        .bar:nth-child(2) { animation-delay: 0.3s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.4s; }
+        .bar:nth-child(5) { animation-delay: 0.15s; }
+    </style>
+</head>
+<body class="text-gray-800 relative pb-24 md:pb-12">
+
+    <!-- Canvas Background for Floating Hearts -->
+    <canvas id="heartCanvas"></canvas>
+
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-40 glass-nav px-4 py-3 shadow-sm">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="openProfileModal()">
+                <div class="relative">
+                    <i class="fa-solid fa-heart text-2xl text-rose-500 glow-heart animate-pulse"></i>
+                </div>
+                <h1 id="coupleTitle" class="font-cursive text-2xl md:text-3xl font-bold text-rose-600 hover:opacity-80 transition">
+                    You & Me
+                </h1>
+                <i class="fa-solid fa-pen text-xs text-rose-400 opacity-60"></i>
+            </div>
+
+            <!-- Tabs Desktop -->
+            <nav class="hidden md:flex space-x-2 bg-white/40 p-1.5 rounded-full border border-white/60">
+                <button onclick="switchTab('home')" id="tab-home" class="nav-btn active-tab px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-house"></i> Beranda
+                </button>
+                <button onclick="switchTab('gallery')" id="tab-gallery" class="nav-btn px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-images"></i> Galeri Kenangan
+                </button>
+                <button onclick="switchTab('games')" id="tab-games" class="nav-btn px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad"></i> Game Bareng
+                </button>
+                <button onclick="switchTab('notes')" id="tab-notes" class="nav-btn px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-envelope-open-text"></i> Surat Cinta
+                </button>
+            </nav>
+
+            <!-- Quick Day Counter Badge -->
+            <div class="bg-rose-500/10 border border-rose-400/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs md:text-sm font-semibold text-rose-700">
+                <i class="fa-solid fa-calendar-heart text-rose-500"></i>
+                <span id="daysCountHeader">0</span> Hari Bersama
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-rose-200 py-2 px-4 flex justify-around items-center shadow-lg">
+        <button onclick="switchTab('home')" id="mob-tab-home" class="flex flex-col items-center text-xs font-medium text-rose-500">
+            <i class="fa-solid fa-house text-lg mb-0.5"></i> Beranda
+        </button>
+        <button onclick="switchTab('gallery')" id="mob-tab-gallery" class="flex flex-col items-center text-xs font-medium text-gray-500">
+            <i class="fa-solid fa-images text-lg mb-0.5"></i> Galeri
+        </button>
+        <button onclick="switchTab('games')" id="mob-tab-games" class="flex flex-col items-center text-xs font-medium text-gray-500">
+            <i class="fa-solid fa-gamepad text-lg mb-0.5"></i> Game
+        </button>
+        <button onclick="switchTab('notes')" id="mob-tab-notes" class="flex flex-col items-center text-xs font-medium text-gray-500">
+            <i class="fa-solid fa-envelope-open-text text-lg mb-0.5"></i> Surat
+        </button>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 relative z-10">
+
+        <!-- TAB 1: HOME SECTION -->
+        <section id="sec-home" class="tab-content block space-y-6">
+            <!-- Hero Banner -->
+            <div class="glass-card rounded-3xl p-6 md:p-10 text-center relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-rose-300/30 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-300/30 rounded-full blur-2xl"></div>
+
+                <span class="inline-block px-4 py-1.5 rounded-full bg-rose-100/80 text-rose-600 font-semibold text-xs md:text-sm tracking-wide uppercase mb-4 shadow-sm">
+                    ✨ Ruang Cinta Kita ✨
+                </span>
+                <h2 class="text-3xl md:text-5xl font-bold text-gray-800 mb-3 font-cursive">
+                    Selamat Datang di Dunia Kita, <span id="partnerNameDisplay" class="text-rose-600">Sayang</span> ❤️
+                </h2>
+                <p class="text-gray-600 text-sm md:text-base max-w-2xl mx-auto mb-6">
+                    Tempat spesial ini dibuat khusus untuk menyimpan kenangan manis, bermain game santai bareng, mendengarkan musik romantis, dan menulis kisah indah kita.
+                </p>
+
+                <!-- Counter Card -->
+                <div class="inline-flex flex-col md:flex-row items-center justify-center gap-4 bg-white/60 backdrop-blur-md p-4 md:px-8 rounded-2xl border border-white shadow-inner">
+                    <div class="text-center">
+                        <span class="text-xs text-gray-500 uppercase font-semibold block">Kita Telah Bersama</span>
+                        <div class="text-3xl md:text-4xl font-extrabold text-rose-600 mt-1" id="heroDaysCounter">0 Hari</div>
+                    </div>
+                    <div class="hidden md:block h-10 w-px bg-rose-200"></div>
+                    <div class="text-xs text-left text-gray-600 space-y-1">
+                        <div>📅 Sejak: <span id="startDateDisplay" class="font-semibold text-gray-800">1 Januari 2023</span></div>
+                        <div>💖 Status: <span class="font-semibold text-rose-500">Bahagia Bersamamu</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Music Player Widget -->
+                <div class="glass-card rounded-3xl p-6 md:col-span-1 flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fa-solid fa-music text-rose-500"></i> Pemutar Musik
+                            </h3>
+                            <!-- Equalizer Visualizer -->
+                            <div id="visualizer" class="flex items-end gap-1 h-6 opacity-40">
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Album Art Artifice -->
+                        <div class="relative w-full aspect-square rounded-2xl overflow-hidden mb-4 shadow-md bg-gradient-to-tr from-rose-400 to-indigo-400 flex items-center justify-center text-white">
+                            <i class="fa-solid fa-compact-disc text-6xl animate-spin" style="animation-duration: 8s;" id="discIcon"></i>
+                            <div class="absolute inset-0 bg-black/20"></div>
+                            <div class="absolute bottom-3 left-3 right-3 text-white">
+                                <p id="trackTitle" class="font-bold text-sm truncate">Romantic Ambient Melody</p>
+                                <p id="trackArtist" class="text-xs text-white/80 truncate">Love Space Radio</p>
+                            </div>
+                        </div>
+
+                        <!-- Audio Element -->
+                        <audio id="audioPlayer" preload="auto"></audio>
+
+                        <!-- Audio Controls -->
+                        <div class="space-y-3">
+                            <input type="range" id="audioSeek" value="0" max="100" class="w-full h-1.5 bg-rose-200 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                            
+                            <div class="flex justify-between items-center">
+                                <button onclick="prevTrack()" class="p-2 text-gray-600 hover:text-rose-600 transition"><i class="fa-solid fa-backward-step text-lg"></i></button>
+                                <button onclick="togglePlay()" id="playBtn" class="w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg hover:bg-rose-600 hover:scale-105 transition">
+                                    <i class="fa-solid fa-play text-lg ml-0.5" id="playIcon"></i>
+                                </button>
+                                <button onclick="nextTrack()" class="p-2 text-gray-600 hover:text-rose-600 transition"><i class="fa-solid fa-forward-step text-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Audio File Upload -->
+                    <div class="mt-4 pt-3 border-t border-rose-200/50">
+                        <label class="cursor-pointer text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center justify-center gap-2 bg-rose-50 p-2 rounded-xl border border-rose-200">
+                            <i class="fa-solid fa-upload"></i> Putar Lagu Favorit Sendiri (MP3)
+                            <input type="file" id="customAudioInput" accept="audio/*" class="hidden" onchange="loadCustomAudio(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Daily Love Quote & Quick Actions -->
+                <div class="glass-card rounded-3xl p-6 md:col-span-2 flex flex-col justify-between space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-bold uppercase tracking-wider text-rose-500 bg-rose-100 px-3 py-1 rounded-full">Pesan Hari Ini</span>
+                            <button onclick="generateRandomQuote()" class="text-xs text-gray-500 hover:text-rose-600 flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-rotate"></i> Acak Quote
+                            </button>
+                        </div>
+                        <blockquote class="text-xl md:text-2xl font-cursive text-gray-800 leading-relaxed italic border-l-4 border-rose-400 pl-4 py-1" id="dailyQuote">
+                            "Mencintaimu adalah keputusan terbaik yang pernah aku buat. Setiap hari bersamamu adalah petualangan terindah."
+                        </blockquote>
+                    </div>
+
+                    <!-- Interactive Love Meter Button -->
+                    <div class="bg-gradient-to-r from-rose-500 to-pink-500 rounded-2xl p-4 text-white flex items-center justify-between shadow-md">
+                        <div>
+                            <h4 class="font-bold text-sm">Cek Tingkat Cinta Hari Ini!</h4>
+                            <p class="text-xs text-rose-100">Tekan tombol untuk mengukur kadar sayangmu!</p>
+                        </div>
+                        <button onclick="calculateLoveMeter()" class="px-4 py-2 bg-white text-rose-600 font-bold rounded-xl text-xs hover:bg-rose-50 transition shadow">
+                            Tes Love Meter 💕
+                        </button>
+                    </div>
+
+                    <!-- Shortcut Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="switchTab('gallery')" class="p-4 bg-white/50 hover:bg-white/80 rounded-2xl cursor-pointer transition border border-white/60 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-xs text-gray-800">Upload Foto</h5>
+                                <p class="text-[10px] text-gray-500">Simpan momen indah</p>
+                            </div>
+                        </div>
+                        <div onclick="switchTab('games')" class="p-4 bg-white/50 hover:bg-white/80 rounded-2xl cursor-pointer transition border border-white/60 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-xs text-gray-800">Main Game</h5>
+                                <p class="text-[10px] text-gray-500">Tantang pasanganmu</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: PHOTO GALLERY SCRAPBOOK -->
+        <section id="sec-gallery" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 md:p-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold font-cursive text-rose-600">Galeri Kenangan Kita 📸</h2>
+                        <p class="text-xs md:text-sm text-gray-600">Upload foto manis kalian. Semua foto akan tersimpan secara otomatis di browser ini (IndexedDB).</p>
+                    </div>
+                    <label class="cursor-pointer bg-rose-500 hover:bg-rose-600 text-white font-medium px-5 py-2.5 rounded-2xl transition shadow-md flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-plus"></i> Tambah Foto Baru
+                        <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+                    </label>
+                </div>
+
+                <!-- Scrapbook Photo Grid -->
+                <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Dynamic Photos Loaded Here -->
+                </div>
+
+                <div id="emptyGalleryNotice" class="text-center py-12 hidden">
+                    <i class="fa-solid fa-images text-5xl text-rose-300 mb-3"></i>
+                    <p class="text-gray-500 text-sm">Belum ada foto yang disimpan. Yuk upload foto pertama kalian!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: MINI GAMES -->
+        <section id="sec-games" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl md:text-3xl font-bold font-cursive text-rose-600 mb-2 text-center">Game Bareng Pasangan 🎮</h2>
+                <p class="text-center text-xs md:text-sm text-gray-600 mb-6">Pilih permainan seru di bawah ini untuk dimainkan berdua!</p>
+
+                <!-- Game Selector Tabs -->
+                <div class="flex justify-center gap-2 mb-8 bg-rose-100/50 p-1.5 rounded-2xl max-w-md mx-auto">
+                    <button onclick="switchGame('memory')" id="gtab-memory" class="subgame-btn flex-1 py-2 text-xs md:text-sm font-semibold rounded-xl transition bg-white shadow text-rose-600">
+                        Memory Card
+                    </button>
+                    <button onclick="switchGame('tictactoe')" id="gtab-tictactoe" class="subgame-btn flex-1 py-2 text-xs md:text-sm font-semibold rounded-xl transition text-gray-600">
+                        Tic-Tac-Toe
+                    </button>
+                    <button onclick="switchGame('quiz')" id="gtab-quiz" class="subgame-btn flex-1 py-2 text-xs md:text-sm font-semibold rounded-xl transition text-gray-600">
+                        Love Quiz
+                    </button>
+                </div>
+
+                <!-- GAME 1: MEMORY CARD MATCHING -->
+                <div id="game-memory" class="game-container max-w-xl mx-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-semibold text-gray-600">Langkah: <span id="memoryMoves" class="text-rose-600 font-bold">0</span></span>
+                        <button onclick="initMemoryGame()" class="text-xs bg-rose-500 text-white px-3 py-1.5 rounded-xl hover:bg-rose-600 transition">Ulang Game</button>
+                    </div>
+                    <div id="memoryBoard" class="grid grid-cols-4 gap-3">
+                        <!-- Cards dynamically rendered -->
+                    </div>
+                </div>
+
+                <!-- GAME 2: TIC TAC TOE FOR TWO -->
+                <div id="game-tictactoe" class="game-container hidden max-w-md mx-auto text-center">
+                    <div class="mb-4 flex justify-around text-sm font-semibold">
+                        <span id="playerXName" class="text-rose-600">Pemain ❤️ (X)</span>
+                        <span id="playerOName" class="text-indigo-600">Pemain 💖 (O)</span>
+                    </div>
+                    <div id="tttStatus" class="text-xs font-semibold text-gray-700 mb-4">Giliran: Pemain X</div>
+                    
+                    <div class="grid grid-cols-3 gap-3 w-64 h-64 mx-auto mb-6">
+                        <button onclick="makeTTTMove(0)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(1)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(2)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(3)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(4)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(5)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(6)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(7)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                        <button onclick="makeTTTMove(8)" class="ttt-cell h-20 bg-white/80 rounded-2xl text-2xl font-bold text-rose-500 shadow border border-rose-100 hover:bg-rose-50 transition flex items-center justify-center"></button>
+                    </div>
+
+                    <button onclick="resetTTT()" class="text-xs bg-rose-500 text-white px-4 py-2 rounded-xl hover:bg-rose-600 transition">Reset Tic-Tac-Toe</button>
+                </div>
+
+                <!-- GAME 3: LOVE QUIZ -->
+                <div id="game-quiz" class="game-container hidden max-w-xl mx-auto">
+                    <div id="quizBox" class="bg-white/70 p-6 rounded-2xl border border-white shadow-sm space-y-4">
+                        <div class="flex justify-between items-center text-xs text-gray-500 font-medium">
+                            <span id="quizProgress">Pertanyaan 1 dari 5</span>
+                            <span id="quizScoreText">Skor: 0</span>
+                        </div>
+                        <h3 id="quizQuestion" class="font-bold text-gray-800 text-lg">Loading pertanyaan...</h3>
+                        <div id="quizOptions" class="space-y-2 pt-2">
+                            <!-- Options rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: LOVE NOTES / SURAT CINTA -->
+        <section id="sec-notes" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 md:p-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold font-cursive text-rose-600">Surat & Catatan Cinta 💌</h2>
+                        <p class="text-xs md:text-sm text-gray-600">Tuliskan pesan-pesan manis, harapan, atau janji spesial untuk pasanganmu.</p>
+                    </div>
+                    <button onclick="openNoteModal()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs md:text-sm font-medium px-4 py-2.5 rounded-xl transition shadow flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-pen-nib"></i> Tulis Surat Baru
+                    </button>
+                </div>
+
+                <!-- Notes Container -->
+                <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Notes Loaded Here -->
+                </div>
+
+                <div id="emptyNotesNotice" class="text-center py-12 hidden">
+                    <i class="fa-solid fa-heart-crack text-5xl text-rose-300 mb-3"></i>
+                    <p class="text-gray-500 text-sm">Belum ada catatan cinta. Yuk tulis pesan pertamamu!</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: EDIT PROFILE / SETTINGS -->
+    <div id="profileModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white/90 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-white space-y-4">
+            <h3 class="text-xl font-bold text-rose-600 font-cursive text-center">Atur Nama & Tanggal Jadian 💑</h3>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Nama Pasangan (Panggilan Sayang):</label>
+                    <input type="text" id="inputPartnerName" class="w-full p-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Namamu:</label>
+                    <input type="text" id="inputYourName" class="w-full p-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Tanggal Mulai Pacaran / Jadian:</label>
+                    <input type="date" id="inputStartDate" class="w-full p-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeProfileModal()" class="px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-100 rounded-xl">Batal</button>
+                <button onclick="saveProfileSettings()" class="px-4 py-2 text-xs font-semibold bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD LOVE NOTE -->
+    <div id="noteModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white/90 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-white space-y-4">
+            <h3 class="text-xl font-bold text-rose-600 font-cursive text-center">Surat Cinta Baru ✍️</h3>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Judul Surat:</label>
+                    <input type="text" id="noteTitleInput" placeholder="Contoh: Selamat Hari Jadi Sayang" class="w-full p-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Isi Pesan:</label>
+                    <textarea id="noteContentInput" rows="4" placeholder="Tuliskan ungkapan perasaanmu di sini..." class="w-full p-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeNoteModal()" class="px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-100 rounded-xl">Batal</button>
+                <button onclick="saveNote()" class="px-4 py-2 text-xs font-semibold bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition">Simpan Surat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOVE METER RESULT -->
+    <div id="loveMeterModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white/95 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-white text-center space-y-4">
+            <i class="fa-solid fa-heart-pulse text-5xl text-rose-500 animate-bounce"></i>
+            <h3 class="text-2xl font-bold font-cursive text-rose-600">Hasil Love Meter Hari Ini</h3>
+            <div class="text-4xl font-extrabold text-rose-500 my-2" id="loveScoreText">100%</div>
+            <p id="loveScoreDesc" class="text-xs text-gray-600 italic">Cinta kalian sangat membara dan tidak terbatas!</p>
+            <button onclick="closeLoveMeterModal()" class="w-full py-2 bg-rose-500 text-white font-bold rounded-xl text-xs hover:bg-rose-600 transition">Tutup 💕</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* -----------------------------------------------------------
+         * INDEXEDDB DATABASE INITIALIZATION (For Photos & Notes)
+         * ----------------------------------------------------------- */
+        let db;
+        const request = indexedDB.open("LoveSpaceDB", 1);
+
+        request.onupgradeneeded = function(e) {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains('photos')) {
+                db.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('notes')) {
+                db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+
+        request.onsuccess = function(e) {
+            db = e.target.result;
+            loadPhotosFromDB();
+            loadNotesFromDB();
+        };
+
+        request.onerror = function(e) {
+            console.error("IndexedDB error:", e.target.errorCode);
+        };
+
+        /* -----------------------------------------------------------
+         * APP STATE & LOCALSTORAGE SETTINGS
+         * ----------------------------------------------------------- */
+        let partnerName = localStorage.getItem('ls_partnerName') || 'Sayang';
+        let yourName = localStorage.getItem('ls_yourName') || 'Aku';
+        let startDate = localStorage.getItem('ls_startDate') || '2023-01-01';
+
+        function updateSettingsUI() {
+            document.getElementById('coupleTitle').innerText = `${yourName} & ${partnerName}`;
+            document.getElementById('partnerNameDisplay').innerText = partnerName;
+            document.getElementById('playerXName').innerText = `${yourName} ❤️ (X)`;
+            document.getElementById('playerOName').innerText = `${partnerName} 💖 (O)`;
+            
+            // Format start date
+            const dateObj = new Date(startDate);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('startDateDisplay').innerText = dateObj.toLocaleDateString('id-ID', options);
+
+            // Calculate Day Counter
+            const today = new Date();
+            const diffTime = Math.abs(today - dateObj);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            document.getElementById('daysCountHeader').innerText = diffDays;
+            document.getElementById('heroDaysCounter').innerText = `${diffDays} Hari`;
+        }
+
+        function openProfileModal() {
+            document.getElementById('inputPartnerName').value = partnerName;
+            document.getElementById('inputYourName').value = yourName;
+            document.getElementById('inputStartDate').value = startDate;
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function saveProfileSettings() {
+            partnerName = document.getElementById('inputPartnerName').value || 'Sayang';
+            yourName = document.getElementById('inputYourName').value || 'Aku';
+            startDate = document.getElementById('inputStartDate').value || '2023-01-01';
+
+            localStorage.setItem('ls_partnerName', partnerName);
+            localStorage.setItem('ls_yourName', yourName);
+            localStorage.setItem('ls_startDate', startDate);
+
+            updateSettingsUI();
+            closeProfileModal();
+        }
+
+        /* -----------------------------------------------------------
+         * NAVIGATION & TABS LOGIC
+         * ----------------------------------------------------------- */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+
+            // Update Desktop Active UI
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-rose-500', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-700', 'hover:bg-white/60');
+            });
+            const activeDesktopBtn = document.getElementById(`tab-${tabId}`);
+            if (activeDesktopBtn) {
+                activeDesktopBtn.classList.add('bg-rose-500', 'text-white', 'shadow-md');
+                activeDesktopBtn.classList.remove('text-gray-700', 'hover:bg-white/60');
+            }
+
+            // Update Mobile Active UI
+            document.querySelectorAll('nav.md\\:hidden button').forEach(btn => {
+                btn.classList.remove('text-rose-500');
+                btn.classList.add('text-gray-500');
+            });
+            const activeMobBtn = document.getElementById(`mob-tab-${tabId}`);
+            if (activeMobBtn) {
+                activeMobBtn.classList.remove('text-gray-500');
+                activeMobBtn.classList.add('text-rose-500');
+            }
+        }
+
+        /* -----------------------------------------------------------
+         * FLOATING HEARTS ANIMATION CANVAS
+         * ----------------------------------------------------------- */
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        let hearts = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Heart {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 100;
+                this.size = Math.random() * 12 + 8;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                this.color = `hsla(${Math.random() * 30 + 330}, 100%, 75%, ${this.opacity})`;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += this.speedX;
+                if (this.y < -20) {
+                    this.y = canvas.height + 20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                const topCurveHeight = this.size * 0.3;
+                ctx.moveTo(this.x, this.y + topCurveHeight);
+                ctx.bezierCurveTo(this.x, this.y, this.x - this.size / 2, this.y, this.x - this.size / 2, this.y + topCurveHeight);
+                ctx.bezierCurveTo(this.x - this.size / 2, this.y + (this.size + topCurveHeight) / 2, this.x, this.y + this.size, this.x, this.y + this.size);
+                ctx.bezierCurveTo(this.x, this.y + this.size, this.x + this.size / 2, this.y + (this.size + topCurveHeight) / 2, this.x + this.size / 2, this.y + topCurveHeight);
+                ctx.bezierCurveTo(this.x + this.size / 2, this.y, this.x, this.y, this.x, this.y + topCurveHeight);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initHearts() {
+            hearts = [];
+            for (let i = 0; i < 25; i++) {
+                hearts.push(new Heart());
+            }
+        }
+
+        function animateHearts() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach(h => {
+                h.update();
+                h.draw();
+            });
+            requestAnimationFrame(animateHearts);
+        }
+
+        /* -----------------------------------------------------------
+         * MUSIC PLAYER LOGIC
+         * ----------------------------------------------------------- */
+        const defaultPlaylist = [
+            {
+                title: "Romantic Ambient Acoustic",
+                artist: "Love Acoustic Sound",
+                src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-acoustic-112163.mp3"
+            },
+            {
+                title: "Sweet Piano Love",
+                artist: "Melodic Dreams",
+                src: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a70512.mp3?filename=sweet-piano-10820.mp3"
+            }
+        ];
+
+        let currentTrackIndex = 0;
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const audioSeek = document.getElementById('audioSeek');
+        const trackTitle = document.getElementById('trackTitle');
+        const trackArtist = document.getElementById('trackArtist');
+        const visualizer = document.getElementById('visualizer');
+        const discIcon = document.getElementById('discIcon');
+
+        function loadTrack(index) {
+            const track = defaultPlaylist[index];
+            trackTitle.innerText = track.title;
+            trackArtist.innerText = track.artist;
+            audioPlayer.src = track.src;
+        }
+
+        function togglePlay() {
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(() => {});
+                playIcon.classList.remove('fa-play');
+                playIcon.classList.add('fa-pause');
+                visualizer.classList.remove('opacity-40');
+                discIcon.classList.add('animate-spin');
+            } else {
+                audioPlayer.pause();
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+                visualizer.classList.add('opacity-40');
+                discIcon.classList.remove('animate-spin');
+            }
+        }
+
+        function prevTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + defaultPlaylist.length) % defaultPlaylist.length;
+            loadTrack(currentTrackIndex);
+            togglePlay();
+        }
+
+        function nextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % defaultPlaylist.length;
+            loadTrack(currentTrackIndex);
+            togglePlay();
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                audioSeek.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            }
+        });
+
+        audioSeek.addEventListener('input', () => {
+            if (audioPlayer.duration) {
+                audioPlayer.currentTime = (audioSeek.value / 100) * audioPlayer.duration;
+            }
+        });
+
+        function loadCustomAudio(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                trackTitle.innerText = file.name;
+                trackArtist.innerText = "Lagu Pilihanmu";
+                audioPlayer.src = url;
+                togglePlay();
+            }
+        }
+
+        /* -----------------------------------------------------------
+         * QUOTE GENERATOR & LOVE METER
+         * ----------------------------------------------------------- */
+        const loveQuotes = [
+            "\"Mencintaimu adalah keputusan terbaik yang pernah aku buat. Setiap hari bersamamu adalah petualangan terindah.\"",
+            "\"Kamu adalah alasan di balik senyuman pertamaku di pagi hari dan doa terakhirku sebelum tidur.\"",
+            "\"Sederhana bersamamu sudah cukup membuat hariku sempurna.\"",
+            "\"Jarak atau waktu tidak akan pernah mengurangi rasa sayangku padamu.\"",
+            "\"Terima kasih sudah hadir dan melengkapi setiap bagian dari hidupku.\""
+        ];
+
+        function generateRandomQuote() {
+            const randomIndex = Math.floor(Math.random() * loveQuotes.length);
+            document.getElementById('dailyQuote').innerText = loveQuotes[randomIndex];
+        }
+
+        function calculateLoveMeter() {
+            const score = Math.floor(Math.random() * 11) + 90; // 90% - 100%
+            document.getElementById('loveScoreText').innerText = `${score}%`;
+            document.getElementById('loveMeterModal').classList.remove('hidden');
+            
+            // Trigger Confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function closeLoveMeterModal() {
+            document.getElementById('loveMeterModal').classList.add('hidden');
+        }
+
+        /* -----------------------------------------------------------
+         * INDEXEDDB PHOTO GALLERY SCRAPBOOK
+         * ----------------------------------------------------------- */
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64Data = event.target.result;
+                const tx = db.transaction('photos', 'readwrite');
+                const store = tx.objectStore('photos');
+                store.add({
+                    image: base64Data,
+                    date: new Date().toLocaleDateString('id-ID')
+                });
+
+                tx.oncomplete = function() {
+                    loadPhotosFromDB();
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadPhotosFromDB() {
+            if (!db) return;
+            const tx = db.transaction('photos', 'readonly');
+            const store = tx.objectStore('photos');
+            const request = store.getAll();
+
+            request.onsuccess = function() {
+                const photos = request.result;
+                const photoGrid = document.getElementById('photoGrid');
+                const emptyNotice = document.getElementById('emptyGalleryNotice');
+
+                photoGrid.innerHTML = '';
+                if (photos.length === 0) {
+                    emptyNotice.classList.remove('hidden');
+                    return;
+                }
+                emptyNotice.classList.add('hidden');
+
+                photos.reverse().forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-3 rounded-2xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 relative group";
+                    card.innerHTML = `
+                        <div class="aspect-square rounded-xl overflow-hidden mb-2 bg-gray-100">
+                            <img src="${p.image}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-500 px-1">
+                            <span>📅 ${p.date}</span>
+                            <button onclick="deletePhoto(${p.id})" class="text-rose-400 hover:text-rose-600">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    photoGrid.appendChild(card);
+                });
+            };
+        }
+
+        function deletePhoto(id) {
+            const tx = db.transaction('photos', 'readwrite');
+            const store = tx.objectStore('photos');
+            store.delete(id);
+            tx.oncomplete = function() {
+                loadPhotosFromDB();
+            };
+        }
+
+        /* -----------------------------------------------------------
+         * INDEXEDDB LOVE NOTES / SURAT CINTA
+         * ----------------------------------------------------------- */
+        function openNoteModal() {
+            document.getElementById('noteModal').classList.remove('hidden');
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.add('hidden');
+        }
+
+        function saveNote() {
+            const title = document.getElementById('noteTitleInput').value.trim();
+            const content = document.getElementById('noteContentInput').value.trim();
+
+            if (!title || !content) return;
+
+            const tx = db.transaction('notes', 'readwrite');
+            const store = tx.objectStore('notes');
+            store.add({
+                title: title,
+                content: content,
+                date: new Date().toLocaleDateString('id-ID')
+            });
+
+            tx.oncomplete = function() {
+                document.getElementById('noteTitleInput').value = '';
+                document.getElementById('noteContentInput').value = '';
+                closeNoteModal();
+                loadNotesFromDB();
+            };
+        }
+
+        function loadNotesFromDB() {
+            if (!db) return;
+            const tx = db.transaction('notes', 'readonly');
+            const store = tx.objectStore('notes');
+            const request = store.getAll();
+
+            request.onsuccess = function() {
+                const notes = request.result;
+                const container = document.getElementById('notesContainer');
+                const emptyNotice = document.getElementById('emptyNotesNotice');
+
+                container.innerHTML = '';
+                if (notes.length === 0) {
+                    emptyNotice.classList.remove('hidden');
+                    return;
+                }
+                emptyNotice.classList.add('hidden');
+
+                notes.reverse().forEach(n => {
+                    const noteCard = document.createElement('div');
+                    noteCard.className = "bg-rose-50/80 backdrop-blur-md p-5 rounded-2xl border border-rose-200/60 shadow-sm relative space-y-2";
+                    noteCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-gray-800 text-base">${n.title}</h4>
+                            <button onclick="deleteNote(${n.id})" class="text-rose-400 hover:text-rose-600 text-xs">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-600 whitespace-pre-line leading-relaxed">${n.content}</p>
+                        <span class="inline-block text-[10px] text-rose-400 font-medium">✨ ${n.date}</span>
+                    `;
+                    container.appendChild(noteCard);
+                });
+            };
+        }
+
+        function deleteNote(id) {
+            const tx = db.transaction('notes', 'readwrite');
+            const store = tx.objectStore('notes');
+            store.delete(id);
+            tx.oncomplete = function() {
+                loadNotesFromDB();
+            };
+        }
+
+        /* -----------------------------------------------------------
+         * MINI GAMES SYSTEM
+         * ----------------------------------------------------------- */
+        function switchGame(gameId) {
+            document.querySelectorAll('.game-container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`game-${gameId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.subgame-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow', 'text-rose-600');
+                btn.classList.add('text-gray-600');
+            });
+
+            const activeBtn = document.getElementById(`gtab-${gameId}`);
+            activeBtn.classList.add('bg-white', 'shadow', 'text-rose-600');
+            activeBtn.classList.remove('text-gray-600');
+
+            if (gameId === 'memory') initMemoryGame();
+            if (gameId === 'quiz') initQuizGame();
+        }
+
+        /* GAME 1: MEMORY CARD MATCHING */
+        const emojis = ['💖', '🌹', '💌', '🧸', '💍', '🎁'];
+        let memoryCards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let memoryMoves = 0;
+
+        function initMemoryGame() {
+            const board = document.getElementById('memoryBoard');
+            board.innerHTML = '';
+            memoryCards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+            flippedCards = [];
+            matchedPairs = 0;
+            memoryMoves = 0;
+            document.getElementById('memoryMoves').innerText = memoryMoves;
+
+            memoryCards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = "memory-card h-24 cursor-pointer";
+                card.dataset.index = index;
+                card.dataset.emoji = emoji;
+
+                card.innerHTML = `
+                    <div class="memory-card-inner w-full h-full relative rounded-2xl shadow-md">
+                        <div class="memory-card-front absolute inset-0 bg-gradient-to-tr from-rose-400 to-pink-300 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+                            ❤️
+                        </div>
+                        <div class="memory-card-back absolute inset-0 bg-white rounded-2xl flex items-center justify-center text-3xl border-2 border-rose-300">
+                            ${emoji}
+                        </div>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => flipMemoryCard(card));
+                board.appendChild(card);
+            });
+        }
+
+        function flipMemoryCard(card) {
+            if (flippedCards.length === 2 || card.classList.contains('flipped')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                memoryMoves++;
+                document.getElementById('memoryMoves').innerText = memoryMoves;
+
+                const [c1, c2] = flippedCards;
+                if (c1.dataset.emoji === c2.dataset.emoji) {
+                    matchedPairs++;
+                    flippedCards = [];
+                    if (matchedPairs === emojis.length) {
+                        setTimeout(() => {
+                            confetti({ particleCount: 100, spread: 60 });
+                        }, 500);
+                    }
+                } else {
+                    setTimeout(() => {
+                        c1.classList.remove('flipped');
+                        c2.classList.remove('flipped');
+                        flippedCards = [];
+                    }, 1000);
+                }
+            }
+        }
+
+        /* GAME 2: TIC TAC TOE FOR TWO */
+        let tttBoard = Array(9).fill(null);
+        let tttTurn = 'X';
+        let tttActive = true;
+
+        function makeTTTMove(index) {
+            if (!tttBoard[index] && tttActive) {
+                tttBoard[index] = tttTurn;
+                const cells = document.querySelectorAll('.ttt-cell');
+                cells[index].innerText = tttTurn === 'X' ? '❤️' : '💖';
+
+                if (checkTTTWinner()) {
+                    document.getElementById('tttStatus').innerText = `Selamat! Pemain ${tttTurn === 'X' ? yourName : partnerName} Menang! 🎉`;
+                    confetti({ particleCount: 80 });
+                    tttActive = false;
+                    return;
+                }
+
+                if (tttBoard.every(cell => cell !== null)) {
+                    document.getElementById('tttStatus').innerText = "Hasil Seri! Kalian Sama-sama Hebat! 🤝";
+                    tttActive = false;
+                    return;
+                }
+
+                tttTurn = tttTurn === 'X' ? 'O' : 'X';
+                document.getElementById('tttStatus').innerText = `Giliran: Pemain ${tttTurn === 'X' ? yourName : partnerName}`;
+            }
+        }
+
+        function checkTTTWinner() {
+            const wins = [
+                [0,1,2], [3,4,5], [6,7,8],
+                [0,3,6], [1,4,7], [2,5,8],
+                [0,4,8], [2,4,6]
+            ];
+            return wins.some(w => tttBoard[w[0]] && tttBoard[w[0]] === tttBoard[w[1]] && tttBoard[w[0]] === tttBoard[w[2]]);
+        }
+
+        function resetTTT() {
+            tttBoard = Array(9).fill(null);
+            tttTurn = 'X';
+            tttActive = true;
+            document.querySelectorAll('.ttt-cell').forEach(c => c.innerText = '');
+            document.getElementById('tttStatus').innerText = `Giliran: Pemain ${yourName}`;
+        }
+
+        /* GAME 3: LOVE QUIZ */
+        const quizQuestions = [
+            {
+                q: "Apa kencan impian paling romantis?",
+                options: ["Makan malam romantis", "Piknik di taman", "Nonton bioskop bareng", "Stargazing malam hari"],
+                correct: 0
+            },
+            {
+                q: "Mana hal yang paling menyenangkan saat bersama?",
+                options: ["Ngobrol santai", "Bermain game bareng", "Jalan-jalan luar kota", "Memasak makanan favorit"],
+                correct: 1
+            },
+            {
+                q: "Kunci utama dalam hubungan yang bahagia adalah...",
+                options: ["Kejujuran & Komunikasi", "Saling memberi hadiah", "Selalu pergi bareng", "Saling menyapa"],
+                correct: 0
+            }
+        ];
+
+        let quizIndex = 0;
+        let quizScore = 0;
+
+        function initQuizGame() {
+            quizIndex = 0;
+            quizScore = 0;
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            if (quizIndex >= quizQuestions.length) {
+                document.getElementById('quizBox').innerHTML = `
+                    <div class="text-center space-y-3 py-4">
+                        <i class="fa-solid fa-trophy text-4xl text-amber-400"></i>
+                        <h3 class="font-bold text-xl text-gray-800">Quiz Selesai!</h3>
+                        <p class="text-sm text-gray-600">Skor Akhir Kuis Pasangan: <span class="font-bold text-rose-600">${quizScore} / ${quizQuestions.length * 10}</span></p>
+                        <button onclick="initQuizGame()" class="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600">Main Lagi</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const q = quizQuestions[quizIndex];
+            document.getElementById('quizProgress').innerText = `Pertanyaan ${quizIndex + 1} dari ${quizQuestions.length}`;
+            document.getElementById('quizScoreText').innerText = `Skor: ${quizScore}`;
+            document.getElementById('quizQuestion').innerText = q.q;
+
+            const opts = document.getElementById('quizOptions');
+            opts.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-3 text-left text-xs md:text-sm bg-white/80 hover:bg-rose-50 rounded-xl border border-rose-100 font-medium text-gray-700 transition";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if (idx === q.correct) quizScore += 10;
+                    quizIndex++;
+                    renderQuizQuestion();
+                };
+                opts.appendChild(btn);
+            });
+        }
+
+        /* -----------------------------------------------------------
+         * INITIALIZATION ON WINDOW LOAD
+         * ----------------------------------------------------------- */
+        window.onload = function() {
+            updateSettingsUI();
+            initHearts();
+            animateHearts();
+            loadTrack(currentTrackIndex);
+            initMemoryGame();
+        };
+    </script>
+</body>
+</html>
